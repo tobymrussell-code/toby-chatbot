@@ -527,6 +527,81 @@ def parse_lead(text):
     return display_text, lead
 
 
+def build_widget_js(base_url):
+    return f"""
+(function() {{
+  var CHAT_SERVER = "{base_url}";
+
+  var style = document.createElement("style");
+  style.textContent = [
+    "#toby-chat-bubble{{position:fixed;bottom:24px;right:24px;width:60px;height:60px;border-radius:50%;background:#1a3c5e;box-shadow:0 4px 16px rgba(0,0,0,0.3);cursor:pointer;z-index:99998;overflow:hidden;border:none;padding:0}}",
+    "#toby-chat-bubble img{{width:100%;height:100%;object-fit:cover;border-radius:50%}}",
+    "#toby-chat-frame{{position:fixed;bottom:100px;right:24px;width:380px;height:600px;border:none;border-radius:16px;box-shadow:0 8px 32px rgba(0,0,0,0.25);z-index:99999;display:none;background:#fff}}",
+    "#toby-chat-close{{position:fixed;bottom:692px;right:24px;width:28px;height:28px;border-radius:50%;background:#666;color:#fff;font-size:16px;line-height:28px;text-align:center;cursor:pointer;z-index:100000;display:none;font-family:sans-serif}}",
+    "@media(max-width:420px){{#toby-chat-frame{{width:calc(100vw - 16px);right:8px;bottom:90px;height:70vh}}#toby-chat-close{{right:8px;bottom:calc(70vh + 98px)}}}}"
+  ].join("");
+  document.head.appendChild(style);
+
+  var bubble = document.createElement("button");
+  bubble.id = "toby-chat-bubble";
+  bubble.title = "Chat with Toby";
+  bubble.innerHTML = "<img src=\\"" + CHAT_SERVER + "/photo\\" alt=\\"Toby\\" onerror=\\"this.style.display=\\'none\\';this.parentNode.innerHTML=\\'&#128172;'\\">";
+  document.body.appendChild(bubble);
+
+  var closeBtn = document.createElement("div");
+  closeBtn.id = "toby-chat-close";
+  closeBtn.textContent = "x";
+  document.body.appendChild(closeBtn);
+
+  var frame = document.createElement("iframe");
+  frame.id = "toby-chat-frame";
+  frame.title = "Chat with Toby Russell";
+  document.body.appendChild(frame);
+
+  var isOpen = false;
+
+  function openChat() {{
+    if (!frame.src) frame.src = CHAT_SERVER;
+    frame.style.display = "block";
+    closeBtn.style.display = "block";
+    isOpen = true;
+  }}
+
+  function closeChat() {{
+    frame.style.display = "none";
+    closeBtn.style.display = "none";
+    isOpen = false;
+  }}
+
+  bubble.addEventListener("click", function() {{ isOpen ? closeChat() : openChat(); }});
+  closeBtn.addEventListener("click", closeChat);
+
+  var photoCount = 0, autoOpened = false;
+  document.addEventListener("click", function(e) {{
+    if (autoOpened || isOpen) return;
+    var t = e.target;
+    if (t.tagName === "IMG") {{
+      if (++photoCount >= 4) {{ openChat(); autoOpened = true; }}
+    }}
+  }});
+
+  var idleTimer, nudgeCount = 0, nudgeSent = false;
+  var delays = [45000, 65000, 85000];
+  function resetIdle() {{
+    if (nudgeSent || isOpen) return;
+    clearTimeout(idleTimer);
+    idleTimer = setTimeout(function() {{
+      if (!isOpen) {{ openChat(); nudgeCount++; if (nudgeCount >= delays.length) nudgeSent = true; }}
+    }}, delays[Math.min(nudgeCount, delays.length - 1)]);
+  }}
+  ["mousemove","keydown","scroll","touchstart"].forEach(function(ev) {{
+    document.addEventListener(ev, resetIdle, {{passive:true}});
+  }});
+  resetIdle();
+}})();
+""".strip()
+
+
 class Handler(BaseHTTPRequestHandler):
     def _send(self, status, body, ctype="text/html"):
         self.send_response(status)
@@ -545,6 +620,8 @@ class Handler(BaseHTTPRequestHandler):
             self._send(200, build_page(BASE_URL))
         elif self.path == "/listing":
             self._send(200, build_listing_page(BASE_URL))
+        elif self.path == "/widget.js":
+            self._send(200, build_widget_js(BASE_URL), "application/javascript")
         else:
             self._send(404, "not found")
 
