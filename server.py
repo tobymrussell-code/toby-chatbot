@@ -745,19 +745,10 @@ def build_widget_js(base_url):
   }});
 
   /* ── Inactivity nudge ────────────────────────────── */
-  var idleTimer, nudgeCount = 0, nudgeSent = false;
-  var delays = [18000, 35000, 55000];
-  function resetIdle() {{
-    if (nudgeSent || isOpen) return;
-    clearTimeout(idleTimer);
-    idleTimer = setTimeout(function() {{
-      if (!isOpen) {{ openChat(); nudgeCount++; if (nudgeCount >= delays.length) nudgeSent = true; }}
-    }}, delays[Math.min(nudgeCount, delays.length - 1)]);
-  }}
-  ["mousemove","keydown","scroll","touchstart"].forEach(function(ev) {{
-    document.addEventListener(ev, resetIdle, {{passive:true}});
-  }});
-  resetIdle();
+  /* ── Auto-open after 18s — fires regardless of activity ── */
+  setTimeout(function() {{
+    if (!isOpen) openChat();
+  }}, 18000);
 }})();
 """.strip()
 
