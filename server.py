@@ -175,130 +175,219 @@ def call_claude(messages):
 
 
 def build_page(base_url):
+    fallback_avatar = "data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='42' height='42'%3E%3Ccircle cx='21' cy='21' r='21' fill='%230f2d4a'/%3E%3Ctext x='21' y='27' font-family='sans-serif' font-size='15' fill='white' text-anchor='middle' font-weight='700'%3ETR%3C/text%3E%3C/svg%3E"
+    fallback_avatar_sm = "data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='28' height='28'%3E%3Ccircle cx='14' cy='14' r='14' fill='%230f2d4a'/%3E%3Ctext x='14' y='19' font-family='sans-serif' font-size='10' fill='white' text-anchor='middle' font-weight='700'%3ETR%3C/text%3E%3C/svg%3E"
     return f"""<!doctype html>
-<html><head><meta charset="utf-8"><title>Chatbot test</title>
+<html><head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Chat with Toby Russell</title>
 <style>
-body{{font-family:system-ui,sans-serif;max-width:480px;margin:40px auto;background:#f5f5f5}}
-#chat{{background:#fff;border-radius:12px;padding:16px;height:480px;overflow-y:auto;box-shadow:0 1px 4px rgba(0,0,0,.1)}}
-.msg{{margin:8px 0;padding:8px 12px;border-radius:10px;max-width:80%;white-space:pre-wrap}}
-.user{{background:#0a7cff;color:#fff;margin-left:auto;text-align:right}}
-.bot{{background:#eee}}
-#row{{display:flex;margin-top:10px;gap:8px}}
-#inp{{flex:1;padding:10px;border:1px solid #ccc;border-radius:8px}}
-#send{{padding:10px 16px;border:none;background:#0a7cff;color:#fff;border-radius:8px;cursor:pointer}}
-#lead{{margin-top:12px;padding:10px;background:#fffbe6;border:1px solid #f0d000;border-radius:8px;display:none;font-size:14px}}
+*{{box-sizing:border-box;margin:0;padding:0}}
+html,body{{height:100%;overflow:hidden}}
+body{{
+  font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,sans-serif;
+  display:flex;flex-direction:column;background:#f0f2f5;
+}}
+
+/* ── Header ── */
+#hdr{{
+  background:linear-gradient(135deg,#0b2640 0%,#1a3c5e 100%);
+  padding:12px 16px;
+  display:flex;align-items:center;gap:12px;
+  box-shadow:0 2px 8px rgba(0,0,0,.25);
+  flex-shrink:0;
+}}
+#av{{
+  width:44px;height:44px;border-radius:50%;
+  border:2px solid rgba(255,255,255,.35);
+  object-fit:cover;flex-shrink:0;background:#1a3c5e;
+}}
+#hdr-info{{flex:1;min-width:0}}
+#hdr-name{{color:#fff;font-size:15px;font-weight:600;letter-spacing:.01em}}
+#hdr-sub{{color:rgba(255,255,255,.72);font-size:12px;margin-top:2px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}}
+#dot{{display:inline-block;width:7px;height:7px;background:#4ade80;border-radius:50%;margin-right:5px;vertical-align:middle;box-shadow:0 0 4px #4ade80}}
+
+/* ── Chat area ── */
+#chat{{
+  flex:1;overflow-y:auto;padding:16px 12px;
+  display:flex;flex-direction:column;gap:10px;
+  scroll-behavior:smooth;
+}}
+
+/* ── Message rows ── */
+.row{{display:flex;align-items:flex-end;gap:8px}}
+.row.u{{flex-direction:row-reverse}}
+.row-av{{
+  width:28px;height:28px;border-radius:50%;
+  object-fit:cover;flex-shrink:0;background:#1a3c5e;
+}}
+.bub{{
+  padding:10px 14px;
+  border-radius:18px;
+  max-width:78%;
+  font-size:14px;
+  line-height:1.5;
+  white-space:pre-wrap;
+  word-break:break-word;
+}}
+.bub.b{{
+  background:#fff;color:#1a1a1a;
+  border-bottom-left-radius:4px;
+  box-shadow:0 1px 3px rgba(0,0,0,.09);
+}}
+.bub.u{{
+  background:#1a3c5e;color:#fff;
+  border-bottom-right-radius:4px;
+}}
+
+/* ── Typing dots ── */
+.dots{{display:flex;gap:5px;padding:12px 14px;background:#fff;border-radius:18px;border-bottom-left-radius:4px;box-shadow:0 1px 3px rgba(0,0,0,.09)}}
+.dots span{{
+  width:7px;height:7px;background:#bbb;border-radius:50%;
+  animation:bounce 1.3s infinite ease-in-out;
+}}
+.dots span:nth-child(2){{animation-delay:.2s}}
+.dots span:nth-child(3){{animation-delay:.4s}}
+@keyframes bounce{{0%,60%,100%{{transform:translateY(0)}}30%{{transform:translateY(-7px)}}}}
+
+/* ── Input bar ── */
+#bar{{
+  padding:10px 12px;background:#fff;
+  border-top:1px solid #e5e7eb;
+  display:flex;gap:8px;align-items:center;
+  flex-shrink:0;
+}}
+#inp{{
+  flex:1;padding:10px 16px;
+  border:1.5px solid #e2e5ea;
+  border-radius:24px;
+  font-size:14px;font-family:inherit;
+  outline:none;background:#f7f8fa;
+  transition:border-color .15s,background .15s;
+}}
+#inp:focus{{border-color:#1a3c5e;background:#fff}}
+#inp::placeholder{{color:#b0b7c3}}
+#send{{
+  width:40px;height:40px;border:none;
+  background:#1a3c5e;color:#fff;
+  border-radius:50%;cursor:pointer;
+  display:flex;align-items:center;justify-content:center;
+  flex-shrink:0;transition:background .15s,transform .1s;
+}}
+#send:hover{{background:#0b2640;transform:scale(1.07)}}
+#send svg{{width:17px;height:17px}}
 </style></head>
 <body>
-<h3>Real Estate Chatbot — local test</h3>
+
+<div id="hdr">
+  <img id="av" src="{base_url}/photo" alt="Toby"
+       onerror="this.src='{fallback_avatar}'">
+  <div id="hdr-info">
+    <div id="hdr-name">Toby Russell</div>
+    <div id="hdr-sub"><span id="dot"></span>NorthGroup Real Estate &middot; Triad NC</div>
+  </div>
+</div>
+
 <div id="chat"></div>
-<div id="row"><input id="inp" placeholder="Ask a question..."><button id="send">Send</button></div>
-<div id="lead"></div>
+
+<div id="bar">
+  <input id="inp" placeholder="Ask me anything...">
+  <button id="send" aria-label="Send">
+    <svg viewBox="0 0 24 24" fill="currentColor"><path d="M2.01 21L23 12 2.01 3 2 10l15 2-15 2z"/></svg>
+  </button>
+</div>
+
 <script>
 const CHAT_URL = '{base_url}/chat';
-const chat = document.getElementById('chat');
-const lead = document.getElementById('lead');
+const chatEl = document.getElementById('chat');
+const AVATAR = '{base_url}/photo';
+const AVATAR_FB = '{fallback_avatar_sm}';
 let history = [];
 
-function addMsg(role, text){{
+function makeAvatar() {{
+  const img = document.createElement('img');
+  img.className = 'row-av';
+  img.src = AVATAR;
+  img.alt = 'Toby';
+  img.onerror = function(){{ this.src = AVATAR_FB; }};
+  return img;
+}}
+
+function addMsg(role, text) {{
+  const row = document.createElement('div');
+  row.className = 'row' + (role === 'user' ? ' u' : '');
+  if (role !== 'user') row.appendChild(makeAvatar());
+  const bub = document.createElement('div');
+  bub.className = 'bub ' + (role === 'user' ? 'u' : 'b');
+  bub.textContent = text;
+  row.appendChild(bub);
+  chatEl.appendChild(row);
+  chatEl.scrollTop = chatEl.scrollHeight;
+}}
+
+function showTyping() {{
+  const row = document.createElement('div');
+  row.className = 'row'; row.id = 'typing';
+  row.appendChild(makeAvatar());
   const d = document.createElement('div');
-  d.className = 'msg ' + (role==='user'?'user':'bot');
-  d.textContent = text;
-  chat.appendChild(d);
-  chat.scrollTop = chat.scrollHeight;
+  d.className = 'dots';
+  d.innerHTML = '<span></span><span></span><span></span>';
+  row.appendChild(d);
+  chatEl.appendChild(row);
+  chatEl.scrollTop = chatEl.scrollHeight;
 }}
-
-function sleep(ms){{ return new Promise(r => setTimeout(r, ms)); }}
-let inactivityTimer = null;
-let convoOver = false;
-let quietCount = 0;
-let awaitingReply = false;
-
-function isPresent(){{
-  return document.visibilityState === 'visible' && document.hasFocus();
+function hideTyping() {{
+  const el = document.getElementById('typing');
+  if (el) el.remove();
 }}
+function sleep(ms) {{ return new Promise(r => setTimeout(r, ms)); }}
 
-function clearInactivityTimer(){{
-  if(inactivityTimer){{ clearTimeout(inactivityTimer); inactivityTimer = null; }}
+let inactivityTimer = null, convoOver = false, quietCount = 0, awaitingReply = false;
+function isPresent() {{ return document.visibilityState === 'visible' && document.hasFocus(); }}
+function clearTimer() {{ if (inactivityTimer) {{ clearTimeout(inactivityTimer); inactivityTimer = null; }} }}
+function armTimer() {{
+  clearTimer();
+  if (convoOver || !awaitingReply || !isPresent()) return;
+  inactivityTimer = setTimeout(handleQuiet, 45000 + quietCount * 20000);
 }}
+document.addEventListener('visibilitychange', () => {{ if (isPresent()) armTimer(); else clearTimer(); }});
+window.addEventListener('focus', armTimer);
+window.addEventListener('blur', clearTimer);
 
-function armInactivityTimer(){{
-  clearInactivityTimer();
-  if(convoOver || !awaitingReply) return;
-  if(!isPresent()) return;
-  const delay = 45000 + quietCount * 20000;
-  inactivityTimer = setTimeout(handleQuiet, delay);
-}}
-
-document.addEventListener('visibilitychange', () => {{ if(isPresent()) armInactivityTimer(); else clearInactivityTimer(); }});
-window.addEventListener('focus', () => armInactivityTimer());
-window.addEventListener('blur', () => clearInactivityTimer());
-
-async function handleQuiet(){{
-  if(convoOver) return;
-  quietCount += 1;
-  const note = `[SYSTEM NOTE: quiet period ${{quietCount}}]`;
-  const tempHistory = history.concat([{{role:'user', content: note}}]);
-  const r = await fetch(CHAT_URL, {{method:'POST', body: JSON.stringify({{messages: tempHistory}})}});
+async function handleQuiet() {{
+  if (convoOver) return;
+  quietCount++;
+  const tmp = history.concat([{{role:'user', content:`[SYSTEM NOTE: quiet period ${{quietCount}}]`}}]);
+  const r = await fetch(CHAT_URL, {{method:'POST', body:JSON.stringify({{messages:tmp}})}});
   const data = await r.json();
-  const words = data.reply.split(/\s+/).length;
-  const delayMs = Math.min(6000, 600 + words * 180 + Math.random() * 400);
-  showTyping();
-  await sleep(delayMs);
-  hideTyping();
+  const delay = Math.min(5000, 500 + data.reply.split(/\s+/).length * 160);
+  showTyping(); await sleep(delay); hideTyping();
   addMsg('assistant', data.reply);
-  history.push({{role:'assistant', content: data.raw}});
-  awaitingReply = true;
-  armInactivityTimer();
+  history.push({{role:'assistant', content:data.raw}});
+  awaitingReply = true; armTimer();
 }}
 
-function showTyping(){{
-  const d = document.createElement('div');
-  d.className = 'msg bot';
-  d.id = 'typing';
-  d.textContent = '...';
-  chat.appendChild(d);
-  chat.scrollTop = chat.scrollHeight;
-}}
-function hideTyping(){{
-  const d = document.getElementById('typing');
-  if(d) d.remove();
-}}
-
-async function send(){{
+async function send() {{
   const inp = document.getElementById('inp');
   const text = inp.value.trim();
-  if(!text) return;
-  clearInactivityTimer();
-  convoOver = false;
-  quietCount = 0;
-  awaitingReply = false;
+  if (!text) return;
+  clearTimer(); convoOver = false; quietCount = 0; awaitingReply = false;
   addMsg('user', text);
   history.push({{role:'user', content:text}});
   inp.value = '';
-
-  const r = await fetch(CHAT_URL, {{method:'POST', body: JSON.stringify({{messages: history}})}});
+  const r = await fetch(CHAT_URL, {{method:'POST', body:JSON.stringify({{messages:history}})}});
   const data = await r.json();
-
-  const words = data.reply.split(/\s+/).length;
-  const delayMs = Math.min(6000, 600 + words * 180 + Math.random() * 400);
-
-  showTyping();
-  await sleep(delayMs);
-  hideTyping();
-
+  const delay = Math.min(5000, 500 + data.reply.split(/\s+/).length * 160);
+  showTyping(); await sleep(delay); hideTyping();
   addMsg('assistant', data.reply);
-  history.push({{role:'assistant', content: data.raw}});
-  if(data.lead){{
-    lead.style.display = 'block';
-    lead.textContent = '✅ Lead captured: ' + JSON.stringify(data.lead);
-  }}
-  awaitingReply = true;
-  armInactivityTimer();
+  history.push({{role:'assistant', content:data.raw}});
+  awaitingReply = true; armTimer();
 }}
 
 document.getElementById('send').onclick = send;
-document.getElementById('inp').addEventListener('keydown', e=>{{ if(e.key==='Enter') send(); }});
-addMsg('assistant', "Hi! I'm here to help with any questions about buying or selling a home, or homes for sale. What can I help with?");
+document.getElementById('inp').addEventListener('keydown', e => {{ if (e.key === 'Enter') send(); }});
+addMsg('assistant', "Hey! I'm Toby's assistant. Whether you're buying, selling, or just exploring the Triad market — I'm here to help. What's on your mind?");
 </script>
 </body></html>"""
 
@@ -530,61 +619,108 @@ def parse_lead(text):
 def build_widget_js(base_url):
     return f"""
 (function() {{
-  var CHAT_SERVER = "{base_url}";
+  var S = "{base_url}";
+  var FB_AV = "data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='60' height='60'%3E%3Ccircle cx='30' cy='30' r='30' fill='%230f2d4a'/%3E%3Ctext x='30' y='38' font-family='sans-serif' font-size='20' fill='white' text-anchor='middle' font-weight='700'%3ETR%3C/text%3E%3C/svg%3E";
 
-  var style = document.createElement("style");
-  style.textContent = [
-    "#toby-chat-bubble{{position:fixed;bottom:24px;right:24px;width:60px;height:60px;border-radius:50%;background:#1a3c5e;box-shadow:0 4px 16px rgba(0,0,0,0.3);cursor:pointer;z-index:99998;overflow:hidden;border:none;padding:0}}",
-    "#toby-chat-bubble img{{width:100%;height:100%;object-fit:cover;border-radius:50%}}",
-    "#toby-chat-frame{{position:fixed;bottom:100px;right:24px;width:380px;height:600px;border:none;border-radius:16px;box-shadow:0 8px 32px rgba(0,0,0,0.25);z-index:99999;display:none;background:#fff}}",
-    "#toby-chat-close{{position:fixed;bottom:692px;right:24px;width:28px;height:28px;border-radius:50%;background:#666;color:#fff;font-size:16px;line-height:28px;text-align:center;cursor:pointer;z-index:100000;display:none;font-family:sans-serif}}",
-    "@media(max-width:420px){{#toby-chat-frame{{width:calc(100vw - 16px);right:8px;bottom:90px;height:70vh}}#toby-chat-close{{right:8px;bottom:calc(70vh + 98px)}}}}"
+  /* ── Styles ────────────────────────────────────────── */
+  var css = [
+    /* Bubble */
+    "#tcb{{position:fixed;bottom:24px;right:24px;width:62px;height:62px;border-radius:50%;cursor:pointer;z-index:99998;border:none;padding:0;background:#1a3c5e;",
+    "box-shadow:0 4px 18px rgba(0,0,0,.38);transition:transform .2s,box-shadow .2s;overflow:visible}}",
+    "#tcb:hover{{transform:scale(1.07);box-shadow:0 6px 24px rgba(0,0,0,.45)}}",
+
+    /* Photo inside bubble */
+    "#tcb .tcb-photo{{width:62px;height:62px;border-radius:50%;object-fit:cover;display:block;",
+    "transition:opacity .2s,transform .2s;border:2px solid rgba(255,255,255,.25)}}",
+
+    /* X icon (shown when open) */
+    "#tcb .tcb-x{{position:absolute;top:0;left:0;width:62px;height:62px;border-radius:50%;",
+    "background:#1a3c5e;display:flex;align-items:center;justify-content:center;",
+    "color:#fff;font-size:26px;font-weight:200;opacity:0;transition:opacity .2s;pointer-events:none;font-family:sans-serif}}",
+    "#tcb.open .tcb-photo{{opacity:0;transform:scale(.7)}}",
+    "#tcb.open .tcb-x{{opacity:1;pointer-events:auto}}",
+
+    /* Notification badge */
+    "#tcb-badge{{position:absolute;top:-1px;right:-1px;width:17px;height:17px;",
+    "background:#ef4444;border-radius:50%;border:2.5px solid #fff;",
+    "animation:tcb-pulse 1.8s ease-in-out 4;z-index:1}}",
+    "@keyframes tcb-pulse{{0%,100%{{transform:scale(1)}}50%{{transform:scale(1.35)}}}}",
+
+    /* Frame wrapper */
+    "#tcw{{position:fixed;bottom:100px;right:24px;width:380px;max-width:calc(100vw - 32px);",
+    "height:580px;max-height:calc(100vh - 120px);border-radius:20px;",
+    "box-shadow:0 12px 48px rgba(0,0,0,.22);overflow:hidden;background:#fff;",
+    "z-index:99999;display:none;opacity:0;transform:translateY(16px) scale(.97);",
+    "transition:opacity .22s ease,transform .22s ease}}",
+    "#tcw.open{{opacity:1;transform:translateY(0) scale(1)}}",
+    "#tcw iframe{{width:100%;height:100%;border:none;display:block}}",
+
+    /* Mobile */
+    "@media(max-width:460px){{",
+    "#tcw{{bottom:0;right:0;left:0;width:100%;max-width:none;height:100vh;max-height:none;border-radius:0}}",
+    "#tcb{{bottom:16px;right:16px}}}}"
   ].join("");
-  document.head.appendChild(style);
 
+  var s = document.createElement("style");
+  s.textContent = css;
+  document.head.appendChild(s);
+
+  /* ── Bubble ──────────────────────────────────────── */
   var bubble = document.createElement("button");
-  bubble.id = "toby-chat-bubble";
-  bubble.title = "Chat with Toby";
-  bubble.innerHTML = "<img src=\\"" + CHAT_SERVER + "/photo\\" alt=\\"Toby\\" onerror=\\"this.style.display=\\'none\\';this.parentNode.innerHTML=\\'&#128172;'\\">";
+  bubble.id = "tcb";
+  bubble.setAttribute("aria-label", "Chat with Toby");
+  bubble.innerHTML =
+    '<img class="tcb-photo" src="' + S + '/photo" alt="Toby" onerror="this.src=\'' + FB_AV + '\'">' +
+    '<span class="tcb-x" aria-hidden="true">&#x2715;</span>' +
+    '<span id="tcb-badge" title="New message"></span>';
   document.body.appendChild(bubble);
 
-  var closeBtn = document.createElement("div");
-  closeBtn.id = "toby-chat-close";
-  closeBtn.textContent = "x";
-  document.body.appendChild(closeBtn);
+  /* Remove badge after its animation */
+  setTimeout(function() {{
+    var b = document.getElementById("tcb-badge");
+    if (b) b.style.display = "none";
+  }}, 8000);
 
+  /* ── Frame wrapper ───────────────────────────────── */
+  var wrap = document.createElement("div");
+  wrap.id = "tcw";
   var frame = document.createElement("iframe");
-  frame.id = "toby-chat-frame";
   frame.title = "Chat with Toby Russell";
-  document.body.appendChild(frame);
+  frame.allow = "microphone";
+  wrap.appendChild(frame);
+  document.body.appendChild(wrap);
 
   var isOpen = false;
 
   function openChat() {{
-    if (!frame.src) frame.src = CHAT_SERVER;
-    frame.style.display = "block";
-    closeBtn.style.display = "block";
+    if (!frame.src) frame.src = S;
+    wrap.style.display = "block";
+    requestAnimationFrame(function() {{
+      requestAnimationFrame(function() {{ wrap.classList.add("open"); }});
+    }});
+    bubble.classList.add("open");
     isOpen = true;
   }}
 
   function closeChat() {{
-    frame.style.display = "none";
-    closeBtn.style.display = "none";
+    wrap.classList.remove("open");
+    bubble.classList.remove("open");
+    setTimeout(function() {{ if (!isOpen) wrap.style.display = "none"; }}, 240);
     isOpen = false;
   }}
 
   bubble.addEventListener("click", function() {{ isOpen ? closeChat() : openChat(); }});
-  closeBtn.addEventListener("click", closeChat);
 
+  /* ── Photo-click trigger (4 images) ─────────────── */
   var photoCount = 0, autoOpened = false;
   document.addEventListener("click", function(e) {{
     if (autoOpened || isOpen) return;
-    var t = e.target;
-    if (t.tagName === "IMG") {{
+    if (e.target.tagName === "IMG" && !e.target.closest("#tcw")) {{
       if (++photoCount >= 4) {{ openChat(); autoOpened = true; }}
     }}
   }});
 
+  /* ── Inactivity nudge ────────────────────────────── */
   var idleTimer, nudgeCount = 0, nudgeSent = false;
   var delays = [45000, 65000, 85000];
   function resetIdle() {{
