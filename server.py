@@ -387,7 +387,30 @@ async function send() {{
 
 document.getElementById('send').onclick = send;
 document.getElementById('inp').addEventListener('keydown', e => {{ if (e.key === 'Enter') send(); }});
-addMsg('assistant', "Hey! I'm Toby's assistant. Whether you're buying, selling, or just exploring the Triad market — I'm here to help. What's on your mind?");
+
+// Context-aware greeting based on referring page
+(function() {{
+  const p = new URLSearchParams(location.search);
+  const ref = (p.get('ref') || '').toLowerCase();
+  const pt  = (p.get('ptitle') || '').toLowerCase();
+  let greeting;
+  if (ref.includes('sell') || ref.includes('list') || pt.includes('sell') || pt.includes('list')) {{
+    greeting = "Hey! Thinking about selling? I can walk you through your options — listing, as-is, or somewhere in between. What's the situation? 🏠";
+  }} else if (ref.includes('buy') || ref.includes('search') || ref.includes('homes-for-sale') || pt.includes('buy') || pt.includes('search') || pt.includes('listing')) {{
+    greeting = "Hey! Looking for homes in the Triad? I can help narrow things down. What area and price range are you working with? 🏡";
+  }} else if (ref.includes('reloc') || ref.includes('moving') || pt.includes('reloc') || pt.includes('moving')) {{
+    greeting = "Hey! Moving to the area? I can help you get a feel for the map — commute, neighborhoods, budget, all of it. Where are you coming from? 🗺️";
+  }} else if (ref.includes('contact') || ref.includes('about') || pt.includes('contact') || pt.includes('about')) {{
+    greeting = "Hey! Want to connect with Toby directly? Drop your info and I'll make sure he reaches out fast 👋";
+  }} else if (ref.includes('invest') || ref.includes('cash') || ref.includes('as-is') || pt.includes('invest') || pt.includes('cash')) {{
+    greeting = "Hey! Looking at investment options or an as-is sale? Toby works both sides of that — happy to explain how it works. What's the property situation?";
+  }} else if (ref.includes('blog') || ref.includes('area') || ref.includes('community') || ref.includes('neighborhood') || pt.includes('guide') || pt.includes('area')) {{
+    greeting = "Hey! Reading up on the area? Smart move. I can answer specifics about any town, commute, or neighborhood you're curious about 🗺️";
+  }} else {{
+    greeting = "Hey! I'm Toby's assistant. Whether you're buying, selling, or just exploring the Triad market — I'm here to help. What's on your mind?";
+  }}
+  addMsg('assistant', greeting);
+}})();
 </script>
 </body></html>"""
 
@@ -694,7 +717,7 @@ def build_widget_js(base_url):
   var isOpen = false;
 
   function openChat() {{
-    if (!frame.src) frame.src = S;
+    if (!frame.src) frame.src = S + "?ref=" + encodeURIComponent(location.href) + "&ptitle=" + encodeURIComponent(document.title.slice(0, 120));
     wrap.style.display = "block";
     requestAnimationFrame(function() {{
       requestAnimationFrame(function() {{ wrap.classList.add("open"); }});
@@ -723,7 +746,7 @@ def build_widget_js(base_url):
 
   /* ── Inactivity nudge ────────────────────────────── */
   var idleTimer, nudgeCount = 0, nudgeSent = false;
-  var delays = [45000, 65000, 85000];
+  var delays = [18000, 35000, 55000];
   function resetIdle() {{
     if (nudgeSent || isOpen) return;
     clearTimeout(idleTimer);
