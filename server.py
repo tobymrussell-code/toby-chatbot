@@ -776,13 +776,14 @@ class Handler(BaseHTTPRequestHandler):
         self._send(200, "")
 
     def do_GET(self):
-        if self.path == "/":
+        path = self.path.split("?")[0]  # strip query string before routing
+        if path == "/":
             self._send(200, build_page(BASE_URL))
-        elif self.path == "/listing":
+        elif path == "/listing":
             self._send(200, build_listing_page(BASE_URL))
-        elif self.path == "/widget.js":
+        elif path == "/widget.js":
             self._send(200, build_widget_js(BASE_URL), "application/javascript")
-        elif self.path == "/photo":
+        elif path == "/photo":
             self.send_response(302)
             self.send_header("Location", "https://d2td4dobkk213c.cloudfront.net/northgrouprealestateinc2557/profiles/2557_1084842.png")
             self.send_header("Access-Control-Allow-Origin", "*")
