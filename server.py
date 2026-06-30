@@ -302,7 +302,7 @@ body{{
 const CHAT_URL = '{base_url}/chat';
 const chatEl = document.getElementById('chat');
 const AVATAR = '{base_url}/photo';
-const AVATAR_FB = '{fallback_avatar_sm}';
+const AVATAR_FB = "{fallback_avatar_sm}";
 let history = [];
 
 function makeAvatar() {{
