@@ -670,9 +670,10 @@ def build_widget_js(base_url):
   bubble.id = "tcb";
   bubble.setAttribute("aria-label", "Chat with Toby");
   bubble.innerHTML =
-    '<img class="tcb-photo" src="' + S + '/photo" alt="Toby" onerror="this.src=\'' + FB_AV + '\'">' +
+    '<img class="tcb-photo" src="' + S + '/photo" alt="Toby">' +
     '<span class="tcb-x" aria-hidden="true">&#x2715;</span>' +
     '<span id="tcb-badge" title="New message"></span>';
+  bubble.querySelector('.tcb-photo').onerror = function() {{ this.onerror = null; this.src = FB_AV; }};
   document.body.appendChild(bubble);
 
   /* Remove badge after its animation */
