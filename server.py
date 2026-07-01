@@ -388,13 +388,24 @@ async function send() {{
 document.getElementById('send').onclick = send;
 document.getElementById('inp').addEventListener('keydown', e => {{ if (e.key === 'Enter') send(); }});
 
-// Context-aware greeting based on referring page
+// Context-aware greeting + history seeding for post-open steering
 (function() {{
   const p = new URLSearchParams(location.search);
-  const ref = (p.get('ref') || '').toLowerCase();
-  const pt  = (p.get('ptitle') || '').toLowerCase();
+  const rawRef = p.get('ref') || '';
+  const rawPt  = p.get('ptitle') || '';
+  const ref = rawRef.toLowerCase();
+  const pt  = rawPt.toLowerCase();
+  const isGeneric = p.get('generic') === '1';
   let greeting;
-  if (ref.includes('sell') || ref.includes('list') || pt.includes('sell') || pt.includes('list')) {{
+  if (isGeneric) {{
+    // 18s fallback: casual human-like opener, rotates so it doesn't feel canned
+    const opts = [
+      "Hey! What's going on? Looking to buy, sell, or just checking out the market? 👋",
+      "Hey there! Toby's assistant here — what can I help you figure out today? 😊",
+      "Hey! Just poking around or is there something specific I can help with? 🙂",
+    ];
+    greeting = opts[Math.floor(Date.now() / 1000) % 3];
+  }} else if (ref.includes('sell') || ref.includes('list') || pt.includes('sell') || pt.includes('list')) {{
     greeting = "Hey! Thinking about selling? I can walk you through your options — listing, as-is, or somewhere in between. What's the situation? 🏠";
   }} else if (ref.includes('buy') || ref.includes('search') || ref.includes('homes-for-sale') || pt.includes('buy') || pt.includes('search') || pt.includes('listing')) {{
     greeting = "Hey! Looking for homes in the Triad? I can help narrow things down. What area and price range are you working with? 🏡";
@@ -408,6 +419,12 @@ document.getElementById('inp').addEventListener('keydown', e => {{ if (e.key ===
     greeting = "Hey! Reading up on the area? Smart move. I can answer specifics about any town, commute, or neighborhood you're curious about 🗺️";
   }} else {{
     greeting = "Hey! I'm Toby's assistant. Whether you're buying, selling, or just exploring the Triad market — I'm here to help. What's on your mind?";
+  }}
+  // Seed history with page context so Claude can naturally steer after the first exchange
+  // if the visitor is still on that page. Claude already knows to treat [SYSTEM NOTE] as internal.
+  if (rawRef || rawPt) {{
+    history.push({{role:'user', content:'[SYSTEM NOTE: visitor is viewing page ' + JSON.stringify(rawRef) + ' with title ' + JSON.stringify(rawPt) + '. After 1-2 natural exchanges you can gently bring up topics relevant to that page if they have not already come up. Do not force it if the visitor is clearly heading in a different direction.]'}});
+    history.push({{role:'assistant', content: greeting}});
   }}
   addMsg('assistant', greeting);
 }})();
@@ -726,6 +743,16 @@ def build_widget_js(base_url):
     isOpen = true;
   }}
 
+  function openChatGeneric() {{
+    if (!frame.src) frame.src = S + "?generic=1&ref=" + encodeURIComponent(location.href) + "&ptitle=" + encodeURIComponent(document.title.slice(0, 120));
+    wrap.style.display = "block";
+    requestAnimationFrame(function() {{
+      requestAnimationFrame(function() {{ wrap.classList.add("open"); }});
+    }});
+    bubble.classList.add("open");
+    isOpen = true;
+  }}
+
   function closeChat() {{
     wrap.classList.remove("open");
     bubble.classList.remove("open");
@@ -745,9 +772,14 @@ def build_widget_js(base_url):
   }});
 
   /* ── Inactivity nudge ────────────────────────────── */
-  /* ── Auto-open after 18s — fires regardless of activity ── */
+  /* ── 10s: contextual greeting — fires if user stays on same page 10s ── */
   setTimeout(function() {{
     if (!isOpen) openChat();
+  }}, 10000);
+
+  /* ── 18s fallback: generic casual greeting if chat still hasn’t opened ── */
+  setTimeout(function() {{
+    if (!isOpen) openChatGeneric();
   }}, 18000);
 }})();
 """.strip()
