@@ -1,0 +1,49 @@
+{
+  "expo": {
+    "name": "Design on a Dime",
+    "slug": "design-on-a-dime",
+    "version": "1.0.0",
+    "orientation": "portrait",
+    "icon": "./assets/icon.png",
+    "userInterfaceStyle": "light",
+    "backgroundColor": "#F7F4EE",
+    "scheme": "designonadime",
+    "ios": {
+      "supportsTablet": true,
+      "bundleIdentifier": "com.designonadime.app",
+      "infoPlist": {
+        "NSCameraUsageDescription": "Design on a Dime needs camera access so you can take a photo of the room you want a renovation report for.",
+        "NSPhotoLibraryUsageDescription": "Design on a Dime needs photo library access so you can choose a room photo to analyze.",
+        "NSPhotoLibraryAddUsageDescription": "Design on a Dime can save your renovation report and photos to your library when you choose to save them."
+      }
+    },
+    "android": {
+      "package": "com.designonadime.app",
+      "adaptiveIcon": {
+        "backgroundColor": "#F7F4EE",
+        "foregroundImage": "./assets/android-icon-foreground.png",
+        "backgroundImage": "./assets/android-icon-background.png",
+        "monochromeImage": "./assets/android-icon-monochrome.png"
+      },
+      "predictiveBackGestureEnabled": false,
+      "permissions": [
+        "CAMERA",
+        "READ_MEDIA_IMAGES",
+        "READ_EXTERNAL_STORAGE"
+      ]
+    },
+    "web": {
+      "favicon": "./assets/favicon.png"
+    },
+    "plugins": [
+      "expo-sharing",
+      [
+        "expo-image-picker",
+        {
+          "photosPermission": "Design on a Dime needs photo library access so you can choose a room photo to analyze.",
+          "cameraPermission": "Design on a Dime needs camera access so you can take a photo of the room you want a renovation report for."
+        }
+      ]
+    ]
+  }
+}
