@@ -1,0 +1,9 @@
+node_modules/
+data/
+uploads/*
+!uploads/.gitkeep
+.env
+*.sqlite3
+*.sqlite3-journal
+*.sqlite3-wal
+*.sqlite3-shm
