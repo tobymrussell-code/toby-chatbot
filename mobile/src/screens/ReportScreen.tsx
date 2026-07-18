@@ -8,6 +8,7 @@ import { colors, radii, spacing, typography } from "../theme/theme";
 import { usePlanning } from "../state/PlanningContext";
 import { saveReportLocally, shareReportSummary } from "../utils/reportExport";
 import { devError } from "../utils/log";
+import type { ValueConfidence } from "../types/domain";
 
 type Props = NativeStackScreenProps<RootStackParamList, "Report">;
 
@@ -44,6 +45,36 @@ function impactTone(impact: string): "high" | "medium" | "low" {
   if (lower === "high") return "high";
   if (lower === "medium") return "medium";
   return "low";
+}
+
+const CONFIDENCE_STEPS: Record<"Low" | "Medium" | "High", number> = { Low: 1, Medium: 2, High: 3 };
+
+function ValueConfidenceMeter({ valueConfidence }: { valueConfidence: ValueConfidence }) {
+  const filledSteps = CONFIDENCE_STEPS[valueConfidence.confidence] || 1;
+  return (
+    <View style={styles.meterWrap}>
+      <View style={styles.meterHeaderRow}>
+        <Text style={styles.levelSubhead}>Value Confidence</Text>
+        <Text style={styles.meterRecoup}>{valueConfidence.recoupRange} recouped</Text>
+      </View>
+      <View style={styles.meterTrack}>
+        {[1, 2, 3].map((step) => (
+          <View
+            key={step}
+            style={[
+              styles.meterSegment,
+              step <= filledSteps && styles.meterSegmentFilled,
+              step === 1 && styles.meterSegmentFirst,
+              step === 3 && styles.meterSegmentLast,
+            ]}
+          />
+        ))}
+      </View>
+      <Text style={styles.meterCaption}>
+        {valueConfidence.confidence} confidence — {valueConfidence.note}
+      </Text>
+    </View>
+  );
 }
 
 export function ReportScreen({ navigation }: Props) {
@@ -137,6 +168,7 @@ export function ReportScreen({ navigation }: Props) {
                 <Text style={styles.levelCost}>{level.costRange}</Text>
               </View>
               <Text style={typography.caption}>{level.timeline} • {level.bestFor}</Text>
+              {level.valueConfidence ? <ValueConfidenceMeter valueConfidence={level.valueConfidence} /> : null}
               {level.tasks?.length ? (
                 <>
                   <Text style={styles.levelSubhead}>Includes</Text>
@@ -383,6 +415,39 @@ const styles = StyleSheet.create({
   bulletRow: { flexDirection: "row", gap: 6 },
   bulletDot: { ...typography.body, color: colors.primary },
   bulletText: { flex: 1 },
+  meterWrap: {
+    marginTop: spacing.sm,
+    marginBottom: spacing.xs,
+    backgroundColor: colors.background,
+    borderRadius: radii.sm,
+    padding: spacing.sm,
+  },
+  meterHeaderRow: {
+    flexDirection: "row",
+    justifyContent: "space-between",
+    alignItems: "center",
+  },
+  meterRecoup: { ...typography.bodyStrong, color: colors.primary, fontSize: 13 },
+  meterTrack: {
+    flexDirection: "row",
+    gap: 3,
+    marginTop: 6,
+    marginBottom: 4,
+  },
+  meterSegment: {
+    flex: 1,
+    height: 8,
+    backgroundColor: colors.border,
+  },
+  meterSegmentFilled: {
+    backgroundColor: colors.primary,
+  },
+  meterSegmentFirst: { borderTopLeftRadius: 4, borderBottomLeftRadius: 4 },
+  meterSegmentLast: { borderTopRightRadius: 4, borderBottomRightRadius: 4 },
+  meterCaption: {
+    ...typography.caption,
+    fontSize: 12,
+  },
   checklistItem: {
     marginBottom: spacing.md,
     paddingBottom: spacing.md,

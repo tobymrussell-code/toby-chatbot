@@ -186,10 +186,11 @@ Respond with ONLY a single valid JSON object (no markdown fences, no commentary 
       "bestFor": string,
       "tasks": [string],
       "pros": [string],
-      "cons": [string]
+      "cons": [string],
+      "valueConfidence": { "recoupRange": string, "confidence": "Low" | "Medium" | "High", "note": string }
     },
-    { "name": "Smart Refresh", "costRange": string, "timeline": string, "bestFor": string, "tasks": [string], "pros": [string], "cons": [string] },
-    { "name": "Full Transformation", "costRange": string, "timeline": string, "bestFor": string, "tasks": [string], "pros": [string], "cons": [string] }
+    { "name": "Smart Refresh", "costRange": string, "timeline": string, "bestFor": string, "tasks": [string], "pros": [string], "cons": [string], "valueConfidence": { "recoupRange": string, "confidence": "Low" | "Medium" | "High", "note": string } },
+    { "name": "Full Transformation", "costRange": string, "timeline": string, "bestFor": string, "tasks": [string], "pros": [string], "cons": [string], "valueConfidence": { "recoupRange": string, "confidence": "Low" | "Medium" | "High", "note": string } }
   ],
   "priorityChecklist": [
     { "task": string, "why": string, "costRange": string, "difficulty": "DIY" | "Pro", "impact": "High" | "Medium" | "Low" }
@@ -204,6 +205,12 @@ Respond with ONLY a single valid JSON object (no markdown fences, no commentary 
   "warnings": [string],
   "finalRecommendation": string
 }
+
+Rules for "valueConfidence" on each project level (the "Value Confidence Meter" feature):
+- "recoupRange" is a general estimated percentage-of-cost-recouped-at-resale range (e.g. "50-70%"), grounded in the general room-type patterns reported in the National Association of REALTORS Remodeling Impact Report. This is a broad industry planning signal, not a valuation of this specific property.
+- "confidence" reflects how reliable that general industry pattern is for this room type and scope: "High" for well-documented, broadly appealing updates (e.g. paint, minor kitchen/bath refreshes), "Medium" for mid-scope work, "Low" for highly personal, niche, or over-improvement-risk scope relative to the neighborhood.
+- "note" is one short sentence with the required hedge, e.g. "General estimate only — actual recoup depends on local market conditions and comparable homes." Never state a specific dollar value increase here.
+- Minimum Prep and small cosmetic work should generally show the highest recoup range and confidence; Full Transformation should carry a lower or more variable range with an explicit over-improvement caution when relevant to the goal (especially for Sell For More and Flip).
 
 Rules for the conditional advice fields:
 - Include "sellerAdvice" ONLY if the goal is "Sell For More" (otherwise set it to null).

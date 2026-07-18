@@ -84,6 +84,12 @@ export interface CompleteAssetResponse {
   roomTypeOptions: RoomType[];
 }
 
+export interface ValueConfidence {
+  recoupRange: string;
+  confidence: "Low" | "Medium" | "High";
+  note: string;
+}
+
 export interface ProjectLevel {
   name: "Minimum Prep" | "Smart Refresh" | "Full Transformation";
   costRange: string;
@@ -92,6 +98,7 @@ export interface ProjectLevel {
   tasks: string[];
   pros: string[];
   cons: string[];
+  valueConfidence: ValueConfidence;
 }
 
 export interface PriorityChecklistItem {
